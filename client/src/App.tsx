@@ -59,6 +59,7 @@ import PharmacyDispensing from "@/pages/PharmacyDispensing";
 import BillingManagement from "@/pages/BillingManagement";
 import IPDManagement from "@/pages/IPDManagement";
 import OTManagement from "@/pages/OTManagement";
+import FastOPDWorkflow from "@/pages/FastOPDWorkflow";
 import InsuranceClaims from "@/pages/InsuranceClaims";
 import MasterDataManagement from "@/pages/MasterDataManagement";
 import PermissionManagement from "@/pages/admin/PermissionManagement";
@@ -81,7 +82,7 @@ function ProtectedRoute({ component: Component }: { component: any }) {
   }
 
   if (!isAuthenticated) {
-    return <Redirect to="/login" />;
+    return <Redirect href="/login" />;
   }
 
   return <Component />;
@@ -143,6 +144,9 @@ function Router() {
       </Route>
       <Route path="/healthcare/doctor-terminal">
         {() => <ProtectedRoute component={DoctorTerminal} />}
+      </Route>
+      <Route path="/healthcare/fast-opd">
+        {() => <ProtectedRoute component={FastOPDWorkflow} />}
       </Route>
       <Route path="/healthcare/test-terminal">
         {() => <ProtectedRoute component={TestTerminal} />}

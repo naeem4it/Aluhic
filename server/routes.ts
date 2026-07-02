@@ -93,6 +93,7 @@ import {
   insertPakistanTaxSlabSchema,
   insertOrganizationHRSettingsSchema,
   insertDepartmentRoleSchema,
+  insertMedicalInstructionSchema,
   type User
 } from "@shared/schema";
 import * as XLSX from "xlsx";
@@ -11978,6 +11979,120 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error fetching roles:", error);
       res.status(500).json({ message: "Failed to fetch roles", error: error?.message });
+    }
+  });
+
+  // ========== Medical Instructions Dictionary Routes ==========
+  
+  app.get("/api/medical-instructions", isAuthenticated, async (req: any, res) => {
+    try {
+      const { category } = req.query;
+      const instructions = await storage.getMedicalInstructions(category as string);
+      res.json(instructions);
+    } catch (error: any) {
+      console.error("Error fetching medical instructions:", error);
+      res.status(500).json({ message: "Failed to fetch medical instructions", error: error?.message });
+    }
+  });
+
+  app.post("/api/medical-instructions", isAuthenticated, async (req: any, res) => {
+    try {
+      const validation = insertMedicalInstructionSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({ message: "Invalid data", errors: validation.error });
+      }
+      
+      const instruction = await storage.createMedicalInstruction(validation.data);
+      res.status(201).json(instruction);
+    } catch (error: any) {
+      console.error("Error creating medical instruction:", error);
+      res.status(500).json({ message: "Failed to create medical instruction", error: error?.message });
+    }
+  });
+
+  app.patch("/api/medical-instructions/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const validation = insertMedicalInstructionSchema.partial().safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({ message: "Invalid data", errors: validation.error });
+      }
+      
+      const instruction = await storage.updateMedicalInstruction(req.params.id, validation.data);
+      if (!instruction) {
+        return res.status(404).json({ message: "Medical instruction not found" });
+      }
+      res.json(instruction);
+    } catch (error: any) {
+      console.error("Error updating medical instruction:", error);
+      res.status(500).json({ message: "Failed to update medical instruction", error: error?.message });
+    }
+  });
+
+  app.delete("/api/medical-instructions/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const deleted = await storage.deleteMedicalInstruction(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Medical instruction not found" });
+      }
+      res.json({ message: "Medical instruction deleted successfully" });
+    } catch (error: any) {
+      console.error("Error deleting medical instruction:", error);
+      res.status(500).json({ message: "Failed to delete medical instruction", error: error?.message });
+    }
+  });
+
+  // ========== Doctor Pharma Commitments ==========
+  app.get("/api/doctor-pharma-commitments", isAuthenticated, async (req: any, res) => {
+    try {
+      const { doctorId, pharmaCompanyId } = req.query;
+      const commitments = await storage.getDoctorPharmaCommitments(
+        doctorId as string | undefined, 
+        pharmaCompanyId as string | undefined
+      );
+      res.json(commitments);
+    } catch (error: any) {
+      console.error("Error fetching doctor pharma commitments:", error);
+      res.status(500).json({ message: "Failed to fetch commitments", error: error?.message });
+    }
+  });
+
+  app.post("/api/doctor-pharma-commitments", isAuthenticated, async (req: any, res) => {
+    try {
+      // In a real app, we'd validate using insertDoctorPharmaCommitmentSchema
+      const commitment = await storage.createDoctorPharmaCommitment({
+        ...req.body,
+        createdBy: req.user.id
+      });
+      res.status(201).json(commitment);
+    } catch (error: any) {
+      console.error("Error creating commitment:", error);
+      res.status(500).json({ message: "Failed to create commitment", error: error?.message });
+    }
+  });
+
+  app.patch("/api/doctor-pharma-commitments/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const commitment = await storage.updateDoctorPharmaCommitment(req.params.id, req.body);
+      if (!commitment) {
+        return res.status(404).json({ message: "Commitment not found" });
+      }
+      res.json(commitment);
+    } catch (error: any) {
+      console.error("Error updating commitment:", error);
+      res.status(500).json({ message: "Failed to update commitment", error: error?.message });
+    }
+  });
+
+  app.delete("/api/doctor-pharma-commitments/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const deleted = await storage.deleteDoctorPharmaCommitment(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Commitment not found" });
+      }
+      res.json({ message: "Commitment deleted successfully" });
+    } catch (error: any) {
+      console.error("Error deleting commitment:", error);
+      res.status(500).json({ message: "Failed to delete commitment", error: error?.message });
     }
   });
 

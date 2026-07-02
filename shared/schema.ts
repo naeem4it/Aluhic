@@ -439,12 +439,30 @@ export const prescriptionMedicines = pgTable("prescription_medicines", {
   genericName: text("generic_name"),
   saltComposition: text("salt_composition"),
   dosage: text("dosage"), // e.g., "500mg"
+  dosageUrdu: text("dosage_urdu"), // Localized Urdu dosage
   frequency: text("frequency"), // e.g., "twice daily"
+  frequencyUrdu: text("frequency_urdu"), // Localized Urdu frequency
   duration: text("duration"), // e.g., "7 days"
+  durationUrdu: text("duration_urdu"), // Localized Urdu duration
   quantity: integer("quantity"), // Number of units prescribed
   instructions: text("instructions"),
+  instructionsUrdu: text("instructions_urdu"), // Localized Urdu instructions
   createdAt: timestamp("created_at").notNull().default(sql`now()`),
 });
+
+// Dictionary for Medical Instructions Translation (English -> Urdu)
+export const medicalInstructionsDict = pgTable("medical_instructions_dict", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  category: text("category").notNull(), // 'dosage', 'frequency', 'duration', 'instruction'
+  englishText: text("english_text").notNull(),
+  urduText: text("urdu_text").notNull(),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().default(sql`now()`),
+});
+
+export const insertMedicalInstructionSchema = createInsertSchema(medicalInstructionsDict).omit({ id: true, createdAt: true });
+export type InsertMedicalInstruction = z.infer<typeof insertMedicalInstructionSchema>;
+export type MedicalInstruction = typeof medicalInstructionsDict.$inferSelect;
 
 export const insertPrescriptionMedicineSchema = createInsertSchema(prescriptionMedicines).omit({ id: true, createdAt: true });
 export type InsertPrescriptionMedicine = z.infer<typeof insertPrescriptionMedicineSchema>;
@@ -4330,3 +4348,26 @@ export const organizationPermissionOverrides = pgTable("organization_permission_
 export const insertOrganizationPermissionOverrideSchema = createInsertSchema(organizationPermissionOverrides).omit({ id: true, createdAt: true, updatedAt: true });
 export type InsertOrganizationPermissionOverride = z.infer<typeof insertOrganizationPermissionOverrideSchema>;
 export type OrganizationPermissionOverride = typeof organizationPermissionOverrides.$inferSelect;
+
+
+
+// ========== Doctor Pharma Commitments ==========
+export const doctorPharmaCommitments = pgTable("doctor_pharma_commitments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  doctorId: varchar("doctor_id").notNull().references(() => persons.id, { onDelete: "cascade" }),
+  pharmaCompanyId: varchar("pharma_company_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  medicineId: varchar("medicine_id").references(() => medicines.id, { onDelete: "cascade" }), // Specific medicine or null for general brand
+  targetQuantity: integer("target_quantity").notNull(), // Units per month/quarter
+  period: text("period").notNull(), // 'monthly', 'quarterly', 'yearly'
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  status: text("status").notNull().default("active"), // active, fulfilled, cancelled
+  notes: text("notes"),
+  createdBy: varchar("created_by").notNull().references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertDoctorPharmaCommitmentSchema = createInsertSchema(doctorPharmaCommitments).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertDoctorPharmaCommitment = z.infer<typeof insertDoctorPharmaCommitmentSchema>;
+export type DoctorPharmaCommitment = typeof doctorPharmaCommitments.$inferSelect;

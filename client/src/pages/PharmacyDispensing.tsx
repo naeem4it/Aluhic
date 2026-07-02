@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Pill, Search, Package, CheckCircle, Clock, AlertTriangle, User, Calendar, FileText, Send, Loader2 } from "lucide-react";
 import type { PrescriptionOrder } from "@shared/schema";
+import { PatientJourneyTracker } from "@/components/PatientJourneyTracker";
 
 export default function PharmacyDispensing() {
   const { toast } = useToast();
@@ -229,6 +230,9 @@ export default function PharmacyDispensing() {
           </div>
         </div>
       </div>
+      
+      {/* Real-time Patient Journey Tracker filtering for patients ready for pharmacy */}
+      <PatientJourneyTracker currentStage="prescription_given" facilityId="mock-facility-123" />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card data-testid="stat-pending-orders">

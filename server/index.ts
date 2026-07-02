@@ -1,6 +1,10 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { db } from "./db";
+import { users } from "@shared/schema";
+import bcrypt from "bcrypt";
+import { eq } from "drizzle-orm";
 
 const app = express();
 
@@ -47,6 +51,41 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Ensure Super Admin exists
+  try {
+    const email = "naeem4it@gmail.com";
+    const password = "#0321Blouch";
+    
+    const existingUser = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    
+    if (existingUser.length > 0) {
+      log(`[Seed] Updating ${email} to ensure super admin access and password...`);
+      const passwordHash = await bcrypt.hash(password, 10);
+      await db.update(users).set({
+        passwordHash,
+        isSuperAdmin: true,
+        role: "super_admin",
+        userType: "super_admin",
+        isEmailVerified: true
+      }).where(eq(users.email, email));
+    } else {
+      log(`[Seed] Creating super admin ${email}...`);
+      const passwordHash = await bcrypt.hash(password, 10);
+      await db.insert(users).values({
+        email,
+        passwordHash,
+        firstName: "Naeem",
+        lastName: "Super Admin",
+        isSuperAdmin: true,
+        role: "super_admin",
+        userType: "super_admin",
+        isEmailVerified: true
+      });
+    }
+  } catch (err) {
+    console.error("[Seed] Failed to seed super admin:", err);
+  }
+
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

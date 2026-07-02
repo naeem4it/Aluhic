@@ -72,18 +72,22 @@ passport.use(
         const user = await storage.getUserByEmail(email);
 
         if (!user) {
+          console.log("[Login Debug] User not found:", email);
           return done(null, false, { message: "Invalid email or password" });
         }
 
         if (!user.isActive) {
+          console.log("[Login Debug] User is inactive", email);
           return done(null, false, { message: "Account is inactive" });
         }
 
         if (!user.passwordHash) {
+          console.log("[Login Debug] Password not set", email);
           return done(null, false, { message: "Password not set for this account" });
         }
 
         const isValidPassword = await bcrypt.compare(password, user.passwordHash);
+        console.log(`[Login Debug] Password valid for ${email}: ${isValidPassword}`);
 
         if (!isValidPassword) {
           return done(null, false, { message: "Invalid email or password" });

@@ -248,7 +248,13 @@ import {
   type InsertOrganizationPermissionOverride,
   prescriptionMedicines,
   type PrescriptionMedicine,
-  type InsertPrescriptionMedicine
+  type InsertPrescriptionMedicine,
+  medicalInstructionsDict,
+  type MedicalInstruction,
+  type InsertMedicalInstruction,
+  doctorPharmaCommitments,
+  type DoctorPharmaCommitment,
+  type InsertDoctorPharmaCommitment
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, and, gte, lte, desc, like, or, isNull, sql, inArray } from "drizzle-orm";
@@ -826,6 +832,18 @@ export interface IStorage {
     accessLevel: 'none' | 'view' | 'create' | 'edit' | 'delete' | 'full';
     source: 'role' | 'organization' | 'user';
   } | null>;
+
+  // Medical Instructions Dictionary
+  getMedicalInstructions(category?: string): Promise<MedicalInstruction[]>;
+  createMedicalInstruction(instruction: InsertMedicalInstruction): Promise<MedicalInstruction>;
+  updateMedicalInstruction(id: string, instruction: Partial<InsertMedicalInstruction>): Promise<MedicalInstruction | undefined>;
+  deleteMedicalInstruction(id: string): Promise<boolean>;
+
+  // Doctor Pharma Commitments
+  getDoctorPharmaCommitments(doctorId?: string, pharmaCompanyId?: string): Promise<DoctorPharmaCommitment[]>;
+  createDoctorPharmaCommitment(commitment: InsertDoctorPharmaCommitment): Promise<DoctorPharmaCommitment>;
+  updateDoctorPharmaCommitment(id: string, commitment: Partial<InsertDoctorPharmaCommitment>): Promise<DoctorPharmaCommitment | undefined>;
+  deleteDoctorPharmaCommitment(id: string): Promise<boolean>;
 }
 
 export class DbStorage implements IStorage {
@@ -4835,6 +4853,66 @@ export class DbStorage implements IStorage {
     if (canCreate) return 'create';
     if (canView) return 'view';
     return 'none';
+  }
+
+  // Medical Instructions Dictionary
+  async getMedicalInstructions(category?: string): Promise<MedicalInstruction[]> {
+    if (category) {
+      return await db.select().from(medicalInstructionsDict).where(eq(medicalInstructionsDict.category, category));
+    }
+    return await db.select().from(medicalInstructionsDict);
+  }
+
+  async createMedicalInstruction(instruction: InsertMedicalInstruction): Promise<MedicalInstruction> {
+    const result = await db.insert(medicalInstructionsDict).values(instruction).returning();
+    return result[0];
+  }
+
+  async updateMedicalInstruction(id: string, instruction: Partial<InsertMedicalInstruction>): Promise<MedicalInstruction | undefined> {
+    const result = await db
+      .update(medicalInstructionsDict)
+      .set(instruction)
+      .where(eq(medicalInstructionsDict.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteMedicalInstruction(id: string): Promise<boolean> {
+    const result = await db.delete(medicalInstructionsDict).where(eq(medicalInstructionsDict.id, id)).returning();
+    return result.length > 0;
+  }
+
+  // ========== Doctor Pharma Commitments Methods ==========
+  async getDoctorPharmaCommitments(doctorId?: string, pharmaCompanyId?: string): Promise<DoctorPharmaCommitment[]> {
+    let query = db.select().from(doctorPharmaCommitments).$dynamic();
+    
+    if (doctorId && pharmaCompanyId) {
+      query = query.where(and(eq(doctorPharmaCommitments.doctorId, doctorId), eq(doctorPharmaCommitments.pharmaCompanyId, pharmaCompanyId)));
+    } else if (doctorId) {
+      query = query.where(eq(doctorPharmaCommitments.doctorId, doctorId));
+    } else if (pharmaCompanyId) {
+      query = query.where(eq(doctorPharmaCommitments.pharmaCompanyId, pharmaCompanyId));
+    }
+    
+    return await query;
+  }
+
+  async createDoctorPharmaCommitment(commitment: InsertDoctorPharmaCommitment): Promise<DoctorPharmaCommitment> {
+    const result = await db.insert(doctorPharmaCommitments).values(commitment).returning();
+    return result[0];
+  }
+
+  async updateDoctorPharmaCommitment(id: string, commitment: Partial<InsertDoctorPharmaCommitment>): Promise<DoctorPharmaCommitment | undefined> {
+    const result = await db.update(doctorPharmaCommitments)
+      .set({ ...commitment, updatedAt: new Date() })
+      .where(eq(doctorPharmaCommitments.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteDoctorPharmaCommitment(id: string): Promise<boolean> {
+    const result = await db.delete(doctorPharmaCommitments).where(eq(doctorPharmaCommitments.id, id)).returning();
+    return result.length > 0;
   }
 }
 

@@ -13,6 +13,8 @@ import { useToast } from "@/hooks/use-toast";
 import { insertConsultationSchema, type InsertConsultation } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { z } from "zod";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PharmaCommitments } from "@/components/PharmaCommitments";
 
 const prescriptionSchema = z.object({
   medications: z.string(),
@@ -127,7 +129,14 @@ export default function DoctorTerminal() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <Tabs defaultValue="consultations" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="consultations">OPD Consultations</TabsTrigger>
+          <TabsTrigger value="commitments">Pharma Commitments</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="consultations" className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-2">
         <Dialog open={isConsultationOpen} onOpenChange={setIsConsultationOpen}>
           <DialogTrigger asChild>
             <Button disabled={!selectedQueueId} data-testid="button-add-consultation">
@@ -343,8 +352,14 @@ export default function DoctorTerminal() {
               </div>
             )}
           </div>
-        </div>
-      )}
+          </div>
+        )}
+      </TabsContent>
+        <TabsContent value="commitments">
+          {/* We would typically pass the current user's personId here, but for now we pass a mock ID or get it from auth context */}
+          <PharmaCommitments doctorId="mock-doctor-id-123" />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
