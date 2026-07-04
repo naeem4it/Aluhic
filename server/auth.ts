@@ -97,7 +97,11 @@ passport.use(
         await storage.updateLastLogin(user.id);
 
         return done(null, user);
-      } catch (error) {
+      } catch (error: any) {
+        console.error("[Login Debug] FATAL ERROR DURING LOGIN:");
+        console.error(error);
+        if (error.message) console.error("Message:", error.message);
+        if (error.stack) console.error("Stack:", error.stack);
         return done(error);
       }
     }

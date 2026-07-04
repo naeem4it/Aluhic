@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, decimal, timestamp, integer, jsonb, index, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, decimal, timestamp, integer, jsonb, index, boolean, primaryKey } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -4371,3 +4371,34 @@ export const doctorPharmaCommitments = pgTable("doctor_pharma_commitments", {
 export const insertDoctorPharmaCommitmentSchema = createInsertSchema(doctorPharmaCommitments).omit({ id: true, createdAt: true, updatedAt: true });
 export type InsertDoctorPharmaCommitment = z.infer<typeof insertDoctorPharmaCommitmentSchema>;
 export type DoctorPharmaCommitment = typeof doctorPharmaCommitments.$inferSelect;
+
+// ==========================================
+// SaaS Module System
+// ==========================================
+
+export const modules = pgTable("modules", {
+  id: varchar("id").primaryKey(), // e.g., 'pms_core'
+  name: text("name").notNull(), // e.g., 'Prescription Management System'
+  description: text("description"),
+  category: text("category").notNull(), // e.g., 'Clinical', 'HCM', 'Pharma'
+  basePrice: decimal("base_price", { precision: 10, scale: 2 }).default("0"),
+  isActive: boolean("is_active").notNull().default(true),
+});
+
+export const companyModules = pgTable("company_modules", {
+  companyId: varchar("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+  moduleId: varchar("module_id").notNull().references(() => modules.id, { onDelete: "cascade" }),
+  status: text("status").notNull().default("active"), // 'active', 'trial', 'suspended'
+  assignedAt: timestamp("assigned_at").defaultNow(),
+  expiresAt: timestamp("expires_at"), // Null means lifetime/auto-renewing
+}, (table) => ({
+  pk: primaryKey({ columns: [table.companyId, table.moduleId] })
+}));
+
+export const insertModuleSchema = createInsertSchema(modules);
+export type Module = typeof modules.$inferSelect;
+export type InsertModule = z.infer<typeof insertModuleSchema>;
+
+export const insertCompanyModuleSchema = createInsertSchema(companyModules);
+export type CompanyModule = typeof companyModules.$inferSelect;
+export type InsertCompanyModule = z.infer<typeof insertCompanyModuleSchema>;

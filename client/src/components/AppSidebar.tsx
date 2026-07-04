@@ -1,4 +1,5 @@
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { useRole } from "@/context/RoleContext";
 import { getMenuForViewingRole } from "@/config/menuConfig";
 import {
@@ -18,8 +19,38 @@ export function AppSidebar() {
   const [location] = useLocation();
   const { viewingRole, isSuperAdmin, isViewingAs } = useRole();
 
+  // Fetch active modules for the current user's company
+  const { data: activeModules = [] } = useQuery<{ moduleId: string, status: string }[]>({
+    queryKey: ["/api/modules"],
+  });
+
+  // Map of sidebar groups to their required module IDs
+  // If a group requires a module, it will only show if that module is active
+  const groupModuleRequirements: Record<string, string> = {
+    sales: "sales_tracking",
+    healthcare: "opd_management",
+    analytics: "sales_tracking", // Assuming analytics needs sales module for now
+    inventory: "inventory_management",
+    hr: "hr_core",
+    accounts: "finance_accounting",
+  };
+
   // Get menu items based on viewing role (supports "View As" feature)
-  const navItems = getMenuForViewingRole(viewingRole, isSuperAdmin, isViewingAs);
+  let navItems = getMenuForViewingRole(viewingRole, isSuperAdmin, isViewingAs);
+
+  // Filter items based on active modules if not super admin
+  if (!isSuperAdmin || isViewingAs) {
+    navItems = navItems.filter((item) => {
+      const group = item.group || "other";
+      const requiredModule = groupModuleRequirements[group];
+      
+      // If no module is required for this group, show it
+      if (!requiredModule) return true;
+      
+      // Otherwise, check if the required module is active
+      return activeModules.some(m => m.moduleId === requiredModule && m.status === 'active');
+    });
+  }
 
   // Group items by their group property
   const groupedItems = navItems.reduce(
@@ -66,10 +97,10 @@ export function AppSidebar() {
                   return (
                     <SidebarMenuItem key={item.path}>
                       <SidebarMenuButton asChild isActive={isActive}>
-                        <a href={item.path} data-testid={`link-sidebar-${item.label.toLowerCase()}`}>
+                        <Link href={item.path} data-testid={`link-sidebar-${item.label.toLowerCase()}`}>
                           <item.icon className="h-4 w-4" />
                           <span>{item.label}</span>
-                        </a>
+                        </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   );

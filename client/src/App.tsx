@@ -82,7 +82,7 @@ function ProtectedRoute({ component: Component }: { component: any }) {
   }
 
   if (!isAuthenticated) {
-    return <Redirect href="/login" />;
+    return <Redirect to="/login" />;
   }
 
   return <Component />;

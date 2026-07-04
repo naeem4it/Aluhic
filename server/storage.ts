@@ -254,7 +254,13 @@ import {
   type InsertMedicalInstruction,
   doctorPharmaCommitments,
   type DoctorPharmaCommitment,
-  type InsertDoctorPharmaCommitment
+  type InsertDoctorPharmaCommitment,
+  modules,
+  type Module,
+  type InsertModule,
+  companyModules,
+  type CompanyModule,
+  type InsertCompanyModule
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, and, gte, lte, desc, like, or, isNull, sql, inArray } from "drizzle-orm";
@@ -844,6 +850,11 @@ export interface IStorage {
   createDoctorPharmaCommitment(commitment: InsertDoctorPharmaCommitment): Promise<DoctorPharmaCommitment>;
   updateDoctorPharmaCommitment(id: string, commitment: Partial<InsertDoctorPharmaCommitment>): Promise<DoctorPharmaCommitment | undefined>;
   deleteDoctorPharmaCommitment(id: string): Promise<boolean>;
+
+  // SaaS Modules
+  getAllModules(): Promise<Module[]>;
+  getCompanyModules(companyId: string): Promise<CompanyModule[]>;
+  toggleCompanyModule(companyId: string, moduleId: string, status: string): Promise<CompanyModule>;
 }
 
 export class DbStorage implements IStorage {
@@ -884,6 +895,14 @@ export class DbStorage implements IStorage {
   async getUserByEmail(email: string): Promise<User | undefined> {
     const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
     return result[0];
+  }
+
+  async updateLastLogin(id: string): Promise<void> {
+    try {
+      await db.update(users).set({ lastLogin: new Date() }).where(eq(users.id, id));
+    } catch (e) {
+      console.error("[DbStorage] Failed to update last login (schema mismatch?):", e);
+    }
   }
 
   async getUsers(searchTerm?: string, companyId?: string): Promise<User[]> {
@@ -4913,6 +4932,36 @@ export class DbStorage implements IStorage {
   async deleteDoctorPharmaCommitment(id: string): Promise<boolean> {
     const result = await db.delete(doctorPharmaCommitments).where(eq(doctorPharmaCommitments.id, id)).returning();
     return result.length > 0;
+  }
+
+  // ==========================================
+  // SaaS Modules
+  // ==========================================
+  async getAllModules(): Promise<Module[]> {
+    return await db.select().from(modules).orderBy(modules.category, modules.name);
+  }
+
+  async getCompanyModules(companyId: string): Promise<CompanyModule[]> {
+    return await db.select().from(companyModules).where(eq(companyModules.companyId, companyId));
+  }
+
+  async toggleCompanyModule(companyId: string, moduleId: string, status: string): Promise<CompanyModule> {
+    const existing = await db.select().from(companyModules)
+      .where(and(eq(companyModules.companyId, companyId), eq(companyModules.moduleId, moduleId)))
+      .limit(1);
+
+    if (existing.length > 0) {
+      const result = await db.update(companyModules)
+        .set({ status })
+        .where(and(eq(companyModules.companyId, companyId), eq(companyModules.moduleId, moduleId)))
+        .returning();
+      return result[0];
+    } else {
+      const result = await db.insert(companyModules)
+        .values({ companyId, moduleId, status })
+        .returning();
+      return result[0];
+    }
   }
 }
 

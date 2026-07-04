@@ -6,7 +6,7 @@ import passport from "passport";
 import { storage } from "./storage";
 import { db } from "./db";
 import { eq, and, or, inArray, gte, lte, desc } from "drizzle-orm";
-import { doctorVisits, doctors, salesEntries } from "@shared/schema";
+import { doctorVisits, doctors, salesEntries, users } from "@shared/schema";
 import { 
   setupAuth, 
   isAuthenticated, 
@@ -12095,6 +12095,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to delete commitment", error: error?.message });
     }
   });
+
+  // ==========================================
+  // Super Admin: SaaS Modules Management
+  // ==========================================
+
+  // Get all companies
+  app.get("/api/companies", requireSuperAdmin, async (req, res) => {
+    try {
+      const companies = await storage.getCompanies();
+      res.json(companies);
+    } catch (error: any) {
+      console.error("Error fetching companies:", error);
+      res.status(500).json({ message: "Failed to fetch companies", error: error?.message });
+    }
+  });
+
+  // Get all available SaaS modules
+  app.get("/api/admin/modules", requireSuperAdmin, async (req, res) => {
+    try {
+      const modules = await storage.getAllModules();
+      res.json(modules);
+    } catch (error: any) {
+      console.error("Error fetching SaaS modules:", error);
+      res.status(500).json({ message: "Failed to fetch modules", error: error?.message });
+    }
+  });
+
+  // Get active modules for a specific company
+  app.get("/api/admin/companies/:companyId/modules", requireSuperAdmin, async (req, res) => {
+    try {
+      const companyModules = await storage.getCompanyModules(req.params.companyId);
+      res.json(companyModules);
+    } catch (error: any) {
+      console.error("Error fetching company modules:", error);
+      res.status(500).json({ message: "Failed to fetch company modules", error: error?.message });
+    }
+  });
+
+  // Toggle a module for a company
+  app.post("/api/admin/companies/:companyId/modules", requireSuperAdmin, async (req, res) => {
+    try {
+      const { moduleId, status } = req.body;
+      if (!moduleId || !status) {
+        return res.status(400).json({ message: "moduleId and status are required" });
+      }
+      const updated = await storage.toggleCompanyModule(req.params.companyId, moduleId, status);
+      res.json(updated);
+    } catch (error: any) {
+      console.error("Error toggling company module:", error);
+      res.status(500).json({ message: "Failed to toggle module", error: error?.message });
+    }
+  });
+
+  // ==========================================
+  // Client: Fetch Active SaaS Modules
+  // ==========================================
+  app.get("/api/modules", isAuthenticated, async (req: any, res) => {
+    try {
+      const companyId = req.user.companyId || req.user.organizationId;
+      if (!companyId) {
+         // Super admins might not have a companyId, return all modules if they want, or empty
+         if (req.user.role === 'super_admin') {
+            const allModules = await storage.getAllModules();
+            return res.json(allModules.map(m => ({ moduleId: m.id, status: 'active' })));
+         }
+         return res.json([]);
+      }
+      const companyModules = await storage.getCompanyModules(companyId);
+      res.json(companyModules.filter(m => m.status === 'active'));
+    } catch (error: any) {
+      console.error("Error fetching user modules:", error);
+      res.status(500).json({ message: "Failed to fetch active modules", error: error?.message });
+    }
+  });
+
 
   // Catch-all 404 handler for undefined API routes
   // This prevents Vite's SPA middleware from serving HTML for non-existent API endpoints
