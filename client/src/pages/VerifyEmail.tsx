@@ -5,7 +5,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
-import alhuicIcon from "@assets/ic_aluhic_1761649815826.png";
+import { AluhicLogo } from "@/components/AluhicLogo";
 
 export default function VerifyEmail() {
   const searchString = useSearch();
@@ -41,7 +41,7 @@ export default function VerifyEmail() {
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
-              <img src={alhuicIcon} alt="Alhuic" className="h-16 w-16" />
+              <AluhicLogo variant="full" size="md" />
             </div>
             <CardTitle>Verifying Email</CardTitle>
             <CardDescription>

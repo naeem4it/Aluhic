@@ -13,8 +13,8 @@ echo        Close this window only when you want to STOP the server.
 echo =======================================================
 echo.
 
-:: Smart launcher: Polls localhost:3333 every second and opens browser as soon as ready
-start /b cmd /c "for /l %%i in (1,1,40) do (curl -s -o nul http://localhost:3333 && (start http://localhost:3333 & exit) || timeout /t 1 >nul) & start http://localhost:3333"
+:: Launch default browser once after server initialization (~10s)
+start /b cmd /c "timeout /t 10 /nobreak >nul & start http://localhost:3333"
 
 call npm.cmd run dev
 if %ERRORLEVEL% neq 0 (

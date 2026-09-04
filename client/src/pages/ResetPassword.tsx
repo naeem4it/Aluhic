@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { Lock, Eye, EyeOff, CheckCircle, XCircle, ArrowLeft } from "lucide-react";
-import alhuicIcon from "@assets/ic_aluhic_1761649815826.png";
+import { AluhicLogo } from "@/components/AluhicLogo";
 
 const resetPasswordSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters"),
@@ -158,7 +158,7 @@ export default function ResetPassword() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <img src={alhuicIcon} alt="Alhuic" className="h-16 w-16" />
+            <AluhicLogo variant="full" size="md" />
           </div>
           <CardTitle>Reset Password</CardTitle>
           <CardDescription>
