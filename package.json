@@ -8,6 +8,7 @@
     "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "start": "cross-env NODE_ENV=production node --env-file=.env dist/index.js",
     "check": "tsc",
+    "db:init": "tsx --env-file=.env init_db.ts",
     "db:push": "drizzle-kit push",
     "db:seed": "tsx --env-file=.env seed_modules.ts",
     "db:admin": "tsx --env-file=.env create-admin.ts"
