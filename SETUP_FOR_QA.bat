@@ -10,9 +10,9 @@ echo.
 echo [1/6] Checking Node.js installation...
 where node >nul 2>&1
 if %ERRORLEVEL% neq 0 (
-    echo [ERROR] Node.js is NOT installed!
-    echo Please install Node.js (LTS version) from https://nodejs.org/
-    echo After installing, reopen this script.
+    echo [ERROR] Node.js is NOT installed or not in PATH!
+    echo Please install Node.js LTS version from https://nodejs.org/
+    echo If you just installed Node.js, please restart your computer.
     pause
     exit /b 1
 )
@@ -32,10 +32,12 @@ if not exist ".env" (
 echo.
 
 :: 3. Install NPM Dependencies
-echo [3/6] Installing application dependencies (this may take a few minutes)...
+echo [3/6] Installing application dependencies...
 call npm install
 if %ERRORLEVEL% neq 0 (
-    echo [ERROR] npm install failed. Check your internet connection and try again.
+    echo.
+    echo [ERROR] npm install failed!
+    echo Check your internet connection or run Command Prompt as normal user.
     pause
     exit /b 1
 )
@@ -47,29 +49,30 @@ echo [4/6] Initializing PostgreSQL database...
 call npm run db:init
 if %ERRORLEVEL% neq 0 (
     echo.
-    echo [WARNING] Could not connect to PostgreSQL!
-    echo Please ensure:
+    echo [ERROR] Could not connect to PostgreSQL!
+    echo Please verify:
     echo  1. PostgreSQL service is running.
-    echo  2. The password in your .env matches your PostgreSQL password.
-    echo     (Default is: DATABASE_URL="postgres://postgres:root@localhost:5432/aluhicdb")
+    echo  2. Password in your .env file matches your PostgreSQL password.
+    echo     Default password expected: root
     echo.
     pause
     exit /b 1
 )
 echo.
 
-:: 5. Push Database Tables & Schema
+:: 5. Push Database Tables and Schema
 echo [5/6] Creating database tables...
 call npm run db:push
 if %ERRORLEVEL% neq 0 (
-    echo [ERROR] Database schema push failed.
+    echo.
+    echo [ERROR] Database schema push failed!
     pause
     exit /b 1
 )
 echo Database tables created.
 echo.
 
-:: 6. Seed Modules & Super Admin
+:: 6. Seed Modules and Super Admin
 echo [6/6] Seeding modules and admin account...
 call npm run db:seed
 call npm run db:admin
