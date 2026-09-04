@@ -1,4 +1,5 @@
 @echo off
+cd /d "%~dp0"
 title ALUHIC - Application Server
 echo =======================================================
 echo                 STARTING ALUHIC SYSTEM                

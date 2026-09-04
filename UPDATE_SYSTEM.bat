@@ -1,4 +1,5 @@
 @echo off
+cd /d "%~dp0"
 title ALUHIC - Update System
 echo =======================================================
 echo               UPDATING ALUHIC SYSTEM                  
