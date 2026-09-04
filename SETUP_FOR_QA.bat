@@ -33,7 +33,7 @@ echo.
 
 :: 3. Install NPM Dependencies
 echo [3/6] Installing application dependencies...
-call npm install
+call npm.cmd install
 if %ERRORLEVEL% neq 0 (
     echo.
     echo [ERROR] npm install failed!
@@ -46,7 +46,7 @@ echo.
 
 :: 4. Initialize Database (create aluhicdb if not exists)
 echo [4/6] Initializing PostgreSQL database...
-call npm run db:init
+call npm.cmd run db:init
 if %ERRORLEVEL% neq 0 (
     echo.
     echo [ERROR] Could not connect to PostgreSQL!
@@ -62,7 +62,7 @@ echo.
 
 :: 5. Push Database Tables and Schema
 echo [5/6] Creating database tables...
-call npm run db:push
+call npm.cmd run db:push
 if %ERRORLEVEL% neq 0 (
     echo.
     echo [ERROR] Database schema push failed!
@@ -74,8 +74,8 @@ echo.
 
 :: 6. Seed Modules and Super Admin
 echo [6/6] Seeding modules and admin account...
-call npm run db:seed
-call npm run db:admin
+call npm.cmd run db:seed
+call npm.cmd run db:admin
 echo.
 
 echo =======================================================

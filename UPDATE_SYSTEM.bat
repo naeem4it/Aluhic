@@ -10,7 +10,7 @@ echo.
 
 :: 1. Update npm packages if new dependencies were added
 echo [1/3] Checking and updating dependencies...
-call npm install
+call npm.cmd install
 if %ERRORLEVEL% neq 0 (
     echo [ERROR] npm install failed. Please check internet connection.
     pause
@@ -21,7 +21,7 @@ echo.
 
 :: 2. Push database schema changes (new tables or columns)
 echo [2/3] Applying database changes...
-call npm run db:push
+call npm.cmd run db:push
 if %ERRORLEVEL% neq 0 (
     echo [ERROR] Database schema update failed. Make sure PostgreSQL is running.
     pause
@@ -32,8 +32,8 @@ echo.
 
 :: 3. Sync any new modules or admin updates
 echo [3/3] Syncing latest modules and admin settings...
-call npm run db:seed
-call npm run db:admin
+call npm.cmd run db:seed
+call npm.cmd run db:admin
 echo.
 
 echo =======================================================
